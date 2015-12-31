@@ -1,0 +1,26 @@
+{
+  "name": "express-php",
+  "version": "0.0.1",
+  "description": "serving PHP over Express/Node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alangecker/express-php.git"
+  },
+  "keywords": [
+    "php",
+    "express"
+  ],
+  "author": "Andreas Langecker",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/alangecker/express-php/issues"
+  },
+  "homepage": "https://github.com/alangecker/express-php#readme",
+  "dependencies": {
+    "path": "^0.12.7"
+  }
+}
