@@ -88,7 +88,7 @@ module.exports =
     return env
 
 
-  run: (file, req, res, cm) ->
+  run: (file, req, res, cmd) ->
 
     err = ""
     cmd = cmd || "php-cgi"
