@@ -113,8 +113,8 @@ module.exports = {
     });
     return env;
   },
-  run: function(file, req, res, cm) {
-    var buf, cmd, err, headerSent, php;
+  run: function(file, req, res, cmd) {
+    var buf, err, headerSent, php;
     err = "";
     cmd = cmd || "php-cgi";
     php = child.spawn(cmd, [], {
