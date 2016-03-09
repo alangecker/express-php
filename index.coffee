@@ -26,12 +26,10 @@ module.exports =
       parts.pathname = path.join(parts.pathname, folder) if(!isPhpFile)
       if isPhpFile
         parts.pathInfo += '/'+folder
-      else if /.*?\.php$/.test(folder)
+      else if /.*?\.php$/.test(folder) or folder.indexOf('.php?') isnt -1
         isPhpFile = true
 
-
     file = path.join(phpdir, parts.pathname)
-    return callback(false) if not isPhpFile && file.substr(-1,1) != '/'
 
     fs.stat file, (err, stats) ->
       return callback(false) if err
@@ -99,26 +97,32 @@ module.exports =
 
     buf = []
     headerSent = false
-    php.stdout.on "data", (data) ->
-      if headerSent
-        buf.push data
-      else
-        chunk = data.toString('binary')
-        body = chunk.split("\r\n\r\n")
-        if body.length > 1
-          head = body[0].split("\r\n")
-          for header in head
-            h = header.split(": ")
-            res.statusCode = parseInt(h[1]) if h[0] == "Status"
-            res.setHeader(h[0], h[1]) if h.length == 2
-          headerSent = true
-          buf.push data.slice(body[0].length+4)
+
+    data = null
+
+    php.stdout.on "data", (data_part) ->
+      data =
+        if data is null
+          data_part
         else
-          buf.push data
+          Buffer.concat([data, data_part])
 
     php.stdout.on "end", (code) ->
       php.stdin.end()
+
+      chunk = data.toString('binary')
+      body = chunk.split("\r\n\r\n")
+
+      head = body[0].split("\r\n")
+
+      for header in head
+        h = header.split(": ")
+        res.statusCode = parseInt(h[1]) if h[0] == "Status"
+        res.setHeader(h[0], h[1]) if h.length == 2
+
+      buf.push data.slice(body[0].length+4)
       res.status(res.statusCode).send(Buffer.concat(buf))
       res.end()
+
     php.on "error", (err) -> console.error(err)
     php.stdout.resume()
