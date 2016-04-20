@@ -38,14 +38,11 @@ module.exports = {
       }
       if (isPhpFile) {
         parts.pathInfo += '/' + folder;
-      } else if (/.*?\.php$/.test(folder)) {
+      } else if (/.*?\.php$/.test(folder) || folder.indexOf('.php?') !== -1) {
         isPhpFile = true;
       }
     }
     file = path.join(phpdir, parts.pathname);
-    if (!isPhpFile && file.substr(-1, 1) !== '/') {
-      return callback(false);
-    }
     return fs.stat(file, function(err, stats) {
       if (err) {
         return callback(false);
@@ -113,8 +110,8 @@ module.exports = {
     });
     return env;
   },
-  run: function(file, req, res, cm) {
-    var buf, cmd, err, headerSent, php;
+  run: function(file, req, res, cmd) {
+    var buf, data, err, headerSent, php;
     err = "";
     cmd = cmd || "php-cgi";
     php = child.spawn(cmd, [], {
@@ -125,34 +122,27 @@ module.exports = {
     req.resume();
     buf = [];
     headerSent = false;
-    php.stdout.on("data", function(data) {
-      var body, chunk, h, head, header, i, len;
-      if (headerSent) {
-        return buf.push(data);
-      } else {
-        chunk = data.toString('binary');
-        body = chunk.split("\r\n\r\n");
-        if (body.length > 1) {
-          head = body[0].split("\r\n");
-          for (i = 0, len = head.length; i < len; i++) {
-            header = head[i];
-            h = header.split(": ");
-            if (h[0] === "Status") {
-              res.statusCode = parseInt(h[1]);
-            }
-            if (h.length === 2) {
-              res.setHeader(h[0], h[1]);
-            }
-          }
-          headerSent = true;
-          return buf.push(data.slice(body[0].length + 4));
-        } else {
-          return buf.push(data);
-        }
-      }
+    data = null;
+    php.stdout.on("data", function(data_part) {
+      return data = data === null ? data_part : Buffer.concat([data, data_part]);
     });
     php.stdout.on("end", function(code) {
+      var body, chunk, h, head, header, i, len;
       php.stdin.end();
+      chunk = data.toString('binary');
+      body = chunk.split("\r\n\r\n");
+      head = body[0].split("\r\n");
+      for (i = 0, len = head.length; i < len; i++) {
+        header = head[i];
+        h = header.split(": ");
+        if (h[0] === "Status") {
+          res.statusCode = parseInt(h[1]);
+        }
+        if (h.length === 2) {
+          res.setHeader(h[0], h[1]);
+        }
+      }
+      buf.push(data.slice(body[0].length + 4));
       res.status(res.statusCode).send(Buffer.concat(buf));
       return res.end();
     });
