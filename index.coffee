@@ -26,7 +26,7 @@ module.exports =
       parts.pathname = path.join(parts.pathname, folder) if(!isPhpFile)
       if isPhpFile
         parts.pathInfo += '/'+folder
-      else if /.*?\.php$/.test(folder) or folder.indexOf('.php?') isnt -1
+      else if /^[^\?]+.php(\?|$)/.test(folder)
         isPhpFile = true
 
     file = path.join(phpdir, parts.pathname)

@@ -38,7 +38,7 @@ module.exports = {
       }
       if (isPhpFile) {
         parts.pathInfo += '/' + folder;
-      } else if (/.*?\.php$/.test(folder) || folder.indexOf('.php?') !== -1) {
+      } else if (/^[^\?]+.php(\?|$)/.test(folder)) {
         isPhpFile = true;
       }
     }
